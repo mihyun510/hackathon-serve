@@ -1,5 +1,6 @@
 package com.packt.cardatabase.service;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -18,14 +19,32 @@ public class JwtService {
 	static final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
 	// Generate JWT token
-	public String getToken(String username) {
+	public String getToken(String username,String role) {
 		String token = Jwts.builder()
 			  .setSubject(username)
+				.claim("role", role)  // Add role to the token
 			  .setExpiration(new Date(System.currentTimeMillis() + EXPIRATIONTIME))
 			  .signWith(key)
 			  .compact();
 		return token;
-  }
+  	}
+
+	// Extract the role from the JWT token
+	public String getAuthRole(HttpServletRequest request) {
+		String token = request.getHeader(HttpHeaders.AUTHORIZATION);
+
+		if (token != null) {
+			Claims claims = Jwts.parserBuilder()
+					.setSigningKey(key)
+					.build()
+					.parseClaimsJws(token.replace(PREFIX, ""))
+					.getBody();
+
+			return claims.get("role", String.class);
+		}
+
+		return null;
+	}
 
 	// Get a token from request Authorization header, 
 	// parse a token and get username
@@ -33,13 +52,15 @@ public class JwtService {
 		String token = request.getHeader(HttpHeaders.AUTHORIZATION);
 	
 		if (token != null) {
-			String user = Jwts.parserBuilder()
+			Claims claims = Jwts.parserBuilder()
 					.setSigningKey(key)
 					.build()
 					.parseClaimsJws(token.replace(PREFIX, ""))
-					.getBody()
-					.getSubject();
-	    
+					.getBody();
+
+			String user = claims.getSubject();
+			String role = claims.get("role", String.class); // Extract role from token
+
 			if (user != null)
 				return user;
 		}

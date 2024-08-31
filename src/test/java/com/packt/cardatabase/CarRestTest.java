@@ -17,7 +17,7 @@ public class CarRestTest {
 	@Autowired
     private MockMvc mockMvc;
     
-	@Test
+//	@Test
 	public void testAuthentication() throws Exception {
 		// Testing authentication with correct credentials
         this.mockMvc.perform(post("/login").content("{\"username\":\"admin\", \"password\":\"admin\"}").

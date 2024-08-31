@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import javax.persistence.*;
 
-
 @Entity
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Product {
@@ -22,7 +21,6 @@ public class Product {
     @Column(nullable = true)
     private Long discount;
 
-    // Getters
     public String getId() {
         return id;
     }
@@ -46,5 +44,4 @@ public class Product {
     public Long getDiscount() {
         return discount;
     }
-
 }

@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -32,13 +33,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private AuthEntryPoint exceptionHandler;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.csrf().disable().cors().and()
 		.sessionManagement()
 		.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
 		.authorizeRequests()
+				.antMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+				.antMatchers("/api/user/**").hasAnyAuthority("ROLE_USER", "ROLE_ADMIN")
 		.antMatchers("/api/product/**").permitAll()
+		.antMatchers(HttpMethod.POST, "/join").permitAll()
 		.antMatchers(HttpMethod.POST, "/login").permitAll()
 				.antMatchers("/thumbnails/**").permitAll()
 				.anyRequest().authenticated().and()
@@ -66,12 +73,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public void configureGlobal(AuthenticationManagerBuilder auth)
 			throws Exception  {
 		auth.userDetailsService(userDetailsService)
-		.passwordEncoder(new BCryptPasswordEncoder());
+		.passwordEncoder(passwordEncoder);
 	}
 
 	@Bean
 	public AuthenticationManager getAuthenticationManager() throws 
 	Exception {
 		return authenticationManager();
+	}
+
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
 	}
 }

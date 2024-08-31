@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.packt.cardatabase.service.JwtService;
+import java.util.Collections;
 
 @Component
 public class AuthenticationFilter extends OncePerRequestFilter {
@@ -31,7 +33,7 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		String path = httpRequest.getRequestURI();
 
-		if (path.startsWith("/api/product")) {
+		if (path.startsWith("/api/product") || path.startsWith("/join")) {
 			filterChain.doFilter(request, response);
 			return;
 		}
@@ -41,12 +43,18 @@ public class AuthenticationFilter extends OncePerRequestFilter {
 		if (jws != null) {
 			// Verify token and get user
 			String user = jwtService.getAuthUser(request);
+			String role = jwtService.getAuthRole(request);
 
-			// Authenticate
-			Authentication authentication = 
-					new UsernamePasswordAuthenticationToken(user, null, java.util.Collections.emptyList());
+			if (user != null && role != null) {
+				// Create an Authentication object with the user's role
+				Authentication authentication = new UsernamePasswordAuthenticationToken(
+						user, null, Collections.singletonList(new SimpleGrantedAuthority(role)));
 
-			SecurityContextHolder.getContext().setAuthentication(authentication);
+				SecurityContextHolder.getContext().setAuthentication(authentication);
+			} else {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+				return;
+			}
 
 		}
 
