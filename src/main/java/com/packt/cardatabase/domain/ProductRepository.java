@@ -8,4 +8,5 @@ import java.util.Optional;
 @RepositoryRestResource
 public interface ProductRepository extends CrudRepository<Product, String> {
     Optional<Product> findById(String productId);
+
 }
